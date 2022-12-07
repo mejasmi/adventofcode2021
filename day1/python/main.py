@@ -42,29 +42,48 @@ How many measurements are larger than the previous measurement?
 
 import numpy as np
 
-def main(dfile):
+def main(dfile, sliding):
 
     num_of_increase = 0
-    last_depth = int(next(dfile))
-    for line in dfile:
-        new_depth = int(line)
-        if (new_depth > last_depth):
-            num_of_increase = num_of_increase + 1
-        last_depth = new_depth
+    if (not sliding):
+        last_depth = int(next(dfile))
+        for line in dfile:
+            new_depth = int(line)
+            if (new_depth > last_depth):
+                num_of_increase = num_of_increase + 1
+            last_depth = new_depth
 
 
-    # last_depth = 0
-    # num_of_increase = 0
-    # skip_first = True
-    # for line in dfile:
-    #     new_depth = int(line)
-    #     if skip_first:
-    #         skip_first = False
-    #         last_depth = new_depth
-    #         continue
-    #     if (new_depth > last_depth):
-    #         num_of_increase = num_of_increase + 1
-    #     last_depth = new_depth
+        # last_depth = 0
+        # num_of_increase = 0
+        # skip_first = True
+        # for line in dfile:
+        #     new_depth = int(line)
+        #     if skip_first:
+        #         skip_first = False
+        #         last_depth = new_depth
+        #         continue
+        #     if (new_depth > last_depth):
+        #         num_of_increase = num_of_increase + 1
+        #     last_depth = new_depth
+    
+    else:
+        last_three = []
+        new_three = []
+        while (len(last_three) < 3):
+            new_depth = int(next(dfile))
+            last_three.append(new_depth)
+            new_three.append(new_depth)
+
+        for line in dfile:
+            new_depth = int(line)
+            new_three.pop(0)
+            new_three.append(new_depth)
+            if (sum(new_three) > sum(last_three)):
+                num_of_increase = num_of_increase + 1
+            last_three.pop(0)
+            last_three.append(new_depth)
+
 
     return num_of_increase
 
@@ -72,6 +91,6 @@ def main(dfile):
 if __name__ == '__main__':
     # open the input file
     dfile = open("../input.txt", "r")
-    result = main(dfile=dfile)
+    result = main(dfile=dfile, sliding=True)
     print("Number of increases is %d.\n" % result)
 
