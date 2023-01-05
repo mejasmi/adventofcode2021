@@ -4,8 +4,9 @@
 #include <stdio.h>
 #include <string>
 #include "day1.h"
+#include "day2.h"
 
-#define DAY 1
+#define DAY 2
 
 
 
@@ -17,8 +18,22 @@ int main() {
     {
         std::cout << "File successfuly opened" << std::endl;
         /* processing goes here */
-        day1(dfile);
-
+        switch (DAY)
+        {
+            case 1:
+            {
+                day1(dfile);
+                break;
+            }
+            case 2:
+            {
+                day2(dfile);
+                break;
+            }
+            default:
+                std::cout << "Bad DAY!" << std::endl;
+            
+        }
         /* close the file */
         dfile.close();
     }
