@@ -21,52 +21,141 @@ In the example above, games 1, 2, and 5 would have been possible if the bag had 
 Determine which games would have been possible if the bag had been loaded with only 12 red cubes, 13 green cubes, and 14 blue cubes. What is the sum of the IDs of those games?
 """
 
+"""
+Your puzzle answer was 2593.
+"""
+
+"""
+--- Part Two ---
+The Elf says they've stopped producing snow because they aren't getting any water! 
+He isn't sure why the water stopped; however, he can show you how to get to the water source to check it out for yourself. It's just up ahead!
+
+As you continue your walk, the Elf poses a second question: 
+in each game you played, what is the fewest number of cubes of each color that could have been in the bag to make the game possible?
+
+Again consider the example games from earlier:
+
+Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green
+Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 green, 1 blue
+Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red
+Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red
+Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green
+In game 1, the game could have been played with as few as 4 red, 2 green, and 6 blue cubes. If any color had even one fewer cube, the game would have been impossible.
+Game 2 could have been played with a minimum of 1 red, 3 green, and 4 blue cubes.
+Game 3 must have been played with at least 20 red, 13 green, and 6 blue cubes.
+Game 4 required at least 14 red, 3 green, and 15 blue cubes.
+Game 5 needed no fewer than 6 red, 3 green, and 2 blue cubes in the bag.
+The power of a set of cubes is equal to the numbers of red, green, and blue cubes multiplied together.
+The power of the minimum set of cubes in game 1 is 48. In games 2-5 it was 12, 1560, 630, and 36, respectively. Adding up these five powers produces the sum 2286.
+
+For each game, find the minimum set of cubes that must have been present. What is the sum of the power of these sets?
+"""
+"""
+Answer 2: 54699
+"""
+
 import numpy as np
 import re
 
 file_path = "data/input_day2.txt"
 
-def parse_game_info(line):
-    # Regular expression to match game number and iterations
-    pattern = re.compile(r'Game (\d+):((?: \d+ \w+,)+)')
-    
-    # Match the pattern in the given line
-    match = pattern.match(line)
-    
-    if match:
-        game_number = int(match.group(1))
-        iterations = match.group(2).strip().split(';')
-        
-        game_data = {}
-        
-        for i, iteration in enumerate(iterations, start=1):
-            colors = re.findall(r'(\d+) (\w+)', iteration)
-            game_data[i] = {color: int(count) for count, color in colors}
-        
-        return game_number, game_data
-    else:
-        return None
+MAX_QUANTITIES = {'red': 12, 'green': 13, 'blue': 14}
 
+def parse_game_info_mb(line: str):
+    assert line[0:4] == 'Game', 'Unsupported format'
+    iterations = []
+    pattern = re.compile(r'((?: \d+ \w+)+)')
+    start = 5
+    pointer = start
+    while line[pointer] != ':':
+        pointer = pointer+1
+    game_number = int(line[start:pointer])
+    pointer = pointer + 1
+    while line[pointer] != '/n' and line[pointer] != 'EOF':
+        iteration = {}
+        while line[pointer] != ';' and line[pointer] != '\n':
+            # iteration
+            start = pointer
+            while line[pointer] != ',' and line[pointer] != ';' and line[pointer] != '\n':
+                pointer = pointer + 1
+                if pointer == len(line):
+                    break
+            match = pattern.match(line[start:pointer])
+            if match:
+                pull = match.group(0).strip().split(' ')
+                iteration[pull[1]] = pull[0]
+            if pointer == len(line):
+                break
+            if line[pointer] != ';' and line[pointer] != '\n':
+                pointer = pointer + 1
+        iterations.append(iteration)
+        if pointer == len(line):
+            break
+        if line[pointer] == '\n':
+            break
+        pointer = pointer + 1
+    return game_number, iterations
 
-    
+def parse_game_info_mb2(line: str):
+    assert line[0:4] == 'Game', 'Unsupported format'
+    iterations = []
+    pattern = re.compile(r'((?: \d+ \w+)+)')
+    start = 5
+    pointer = start
+    while line[pointer] != ':':
+        pointer = pointer+1
+    game_number = int(line[start:pointer])
+    pointer = pointer + 1
+    str_iterations = line[pointer:].split(';')
+    for iter in str_iterations:
+        iteration = {}
+        str_pulls = iter.split(',')
+        for pl in str_pulls:
+            match = pattern.match(pl)
+            if match:
+                pull = match.group(0).strip().split(' ')
+                iteration[pull[1]] = pull[0]
+        iterations.append(iteration)
+    return game_number, iterations
+
 
 with open(file=file_path, mode="r+") as file:
     lines = file.readlines()
     games = {}
     for line in lines:
-        result = parse_game_info(line)
+        game_number, iterations = parse_game_info_mb2(line)
 
-        if result:
-            game_number, game_data = result
-            print(f"Game Number: {game_number}")
-            for iteration, colors in game_data.items():
-                print(f"Iteration {iteration}: {colors}")
-            games[game_number] = {color:iteration for iteration, colors in game_data.items()}
-        else:
-            print("Invalid format")
+        print(f"Game Number: {game_number}")
+        games[game_number] = iterations
 
-# check the valid games
-for game in games:
-    for color, quantity in game.items():
-        if quantity > MAX_QUANTITIES[color]:
+    # check the valid games
+    good_games = []
+    sum_good_game_index = 0
+    for game_number, game in games.items():
+        bad_game = False
+        for iteration in game:
+            for color, quantity in iteration.items():
+                if int(quantity) > MAX_QUANTITIES[color]:
+                    bad_game = True
+        if not bad_game:
+            good_games.append(game)
+            sum_good_game_index += game_number
+
+    # power of the set of cubes
+    power_sum = 0
+    for _, game in games.items():
+        all_pulls = {}
+        for iteration in game:
+            for color, quantity in iteration.items():
+                if color in all_pulls.keys():
+                    all_pulls[color] = max(int(all_pulls[color]), int(quantity))
+                else:
+                    all_pulls[color] = int(quantity)
+        power = 1
+        for value in all_pulls.values():
+            power = power * value
+        power_sum = power_sum + power
+
+    print(f'Sum of good games IDs: {sum_good_game_index}')
+    print(f'Power sum:{power_sum}')
             
